@@ -64,31 +64,54 @@ in {
     virtualHosts = {
 
       "${domain1}" = {
-        locations."/" = {
-          root = dataDir1;  # Root directory for domain1
-          extraConfig = ''
-            # FastCGI configuration for handling PHP files
-            fastcgi_split_path_info ^(.+\.php)(/.+)$;
-            fastcgi_index  index.php;
-            fastcgi_pass unix:${config.services.phpfpm.pools.${web1}.socket};
-            include ${pkgs.nginx}/conf/fastcgi_params;
-            include ${pkgs.nginx}/conf/fastcgi.conf;
-          '';
-        };
-      };
+      root = dataDir1;
+      extraConfig = ''
+        index index.php;
 
-      "${domain2}" = {
-        locations."/" = {
-          root = dataDir2;
-          extraConfig = ''
-            fastcgi_split_path_info ^(.+\.php)(/.+)$;
-            fastcgi_index  index.php;
-            fastcgi_pass unix:${config.services.phpfpm.pools.${web2}.socket};
-            include ${pkgs.nginx}/conf/fastcgi_params;
-            include ${pkgs.nginx}/conf/fastcgi.conf;
-          '';
-        };
-      };
+        # Try to serve the requested URI as is, if not, fall back to index.php
+        location / {
+          try_files $uri $uri/ /index.php$is_args$args;
+        }
+
+        location ~ \.php$ {
+          fastcgi_split_path_info ^(.+\.php)(/.+)$;
+          fastcgi_index  index.php;
+          fastcgi_pass unix:${config.services.phpfpm.pools.${web1}.socket};
+          include ${pkgs.nginx}/conf/fastcgi_params;
+          include ${pkgs.nginx}/conf/fastcgi.conf;
+        }
+
+        # Try to serve the file, if not found, return a 404 error
+        location ~* \.(css|js|jpg|jpeg|png|gif|ico|html|xml|txt)$ {
+          try_files $uri =404;
+        }
+      '';
+    };
+
+    "${domain2}" = {
+      root = dataDir2;
+      extraConfig = ''
+        index index.php;
+
+        # Try to serve the requested URI as is, if not, fall back to index.php
+        location / {
+          try_files $uri $uri/ /index.php$is_args$args;
+        }
+
+        location ~ \.php$ {
+          fastcgi_split_path_info ^(.+\.php)(/.+)$;
+          fastcgi_index  index.php;
+          fastcgi_pass unix:${config.services.phpfpm.pools.${web2}.socket};
+          include ${pkgs.nginx}/conf/fastcgi_params;
+          include ${pkgs.nginx}/conf/fastcgi.conf;
+        }
+
+        # Try to serve the file, if not found, return a 404 error
+        location ~* \.(css|js|jpg|jpeg|png|gif|ico|html|xml|txt)$ {
+          try_files $uri =404;
+        }
+      '';
+    };
 
       # Repeat the above configuration for more domains with respective variables
 
