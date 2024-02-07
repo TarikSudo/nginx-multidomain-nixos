@@ -64,26 +64,19 @@ in {
     virtualHosts = {
 
       "${domain1}" = {
-      root = dataDir1;
-      extraConfig = ''
-        index index.php;
+      index index.php;
 
-        # Try to serve the requested URI as is, if not, fall back to index.php
         location / {
-          try_files $uri $uri/ /index.php$is_args$args;
+          try_files $uri $uri/ /index.php;
         }
 
         location ~ \.php$ {
+          try_files $uri $uri/ /index.php;
           fastcgi_split_path_info ^(.+\.php)(/.+)$;
           fastcgi_index  index.php;
           fastcgi_pass unix:${config.services.phpfpm.pools.${web1}.socket};
           include ${pkgs.nginx}/conf/fastcgi_params;
           include ${pkgs.nginx}/conf/fastcgi.conf;
-        }
-
-        # Try to serve the file, if not found, return a 404 error
-        location ~* \.(css|js|jpg|jpeg|png|gif|ico|html|xml|txt)$ {
-          try_files $uri =404;
         }
       '';
     };
@@ -93,22 +86,17 @@ in {
       extraConfig = ''
         index index.php;
 
-        # Try to serve the requested URI as is, if not, fall back to index.php
         location / {
-          try_files $uri $uri/ /index.php$is_args$args;
+          try_files $uri $uri/ /index.php;
         }
 
         location ~ \.php$ {
+          try_files $uri $uri/ /index.php;
           fastcgi_split_path_info ^(.+\.php)(/.+)$;
           fastcgi_index  index.php;
           fastcgi_pass unix:${config.services.phpfpm.pools.${web2}.socket};
           include ${pkgs.nginx}/conf/fastcgi_params;
           include ${pkgs.nginx}/conf/fastcgi.conf;
-        }
-
-        # Try to serve the file, if not found, return a 404 error
-        location ~* \.(css|js|jpg|jpeg|png|gif|ico|html|xml|txt)$ {
-          try_files $uri =404;
         }
       '';
     };
